@@ -1,5 +1,12 @@
 'reach 0.1';
 
+// WORKSHOP
+
+// Rock Paper Scissors
+// Additions features
+// - Make game fair for Alice
+// + Even number of consensus steps for gameplay
+
 const [ isHand, ROCK, PAPER, SCISSORS ] = makeEnum(3);
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
@@ -64,17 +71,29 @@ export const main =
         commit();
 
         unknowable(B, A(_handA, _saltA));
+
         B.only(() => {
-          const handB = declassify(interact.getHand()); });
-        B.publish(handB)
+          const _handB = interact.getHand();
+          const [_commitB, _saltB] = makeCommitment(interact, _handB);
+          const commitB = declassify(_commitB); });
+        B.publish(commitB)
           .timeout(DEADLINE, () => closeTo(A, informTimeout));
         commit();
+
+        unknowable(A, B(_handB, _saltB));
 
         A.only(() => {
           const [saltA, handA] = declassify([_saltA, _handA]); });
         A.publish(saltA, handA)
           .timeout(DEADLINE, () => closeTo(B, informTimeout));
         checkCommitment(commitA, saltA, handA);
+        commit(); 
+
+        B.only(() => {
+          const [saltB, handB] = declassify([_saltB, _handB]); });
+        B.publish(saltB, handB)
+          .timeout(DEADLINE, () => closeTo(A, informTimeout));
+        checkCommitment(commitB, saltB, handB);
 
         outcome = winner(handA, handB);
         continue; }
