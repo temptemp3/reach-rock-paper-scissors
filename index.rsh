@@ -4,8 +4,8 @@
 
 // Rock Paper Scissors
 // Additions features
-// - Make game fair for Alice
-// + Even number of consensus steps for gameplay
+// - Make game fair 
+// + Alternate first moves
 
 const [isHand, ROCK, PAPER, SCISSORS] = makeEnum(3);
 const [isOutcome, B_WINS, DRAW, A_WINS] = makeEnum(3);
