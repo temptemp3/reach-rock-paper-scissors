@@ -57,6 +57,7 @@ export const main =
           interact.informTimeout();
         });
       };
+      const isEvenTurn = state => state.turn % 2 === 0;
       const playRound = [
         (state) => {
           commit();
@@ -118,24 +119,33 @@ export const main =
 
       A.only(() => {
         const wager = declassify(interact.wager);
+        const _handA = interact.getHand();
+        const [_commitA, _saltA] = makeCommitment(interact, _handA);
+        const commitA = declassify(_commitA);
       });
-      A.publish(wager)
-        .pay(wager);
+      A.publish(wager, commitA)
+        .pay(wager)
+        .timeout(DEADLINE, () => closeTo(B, informTimeout));
       commit();
-
+      unknowable(B, A(_handA, _saltA));
       B.only(() => {
         interact.acceptWager(wager);
+        const handB = declassify(interact.getHand())
       });
-      B.pay(wager)
+      B.publish(handB)
+        .pay(wager)
         .timeout(DEADLINE, () => closeTo(A, informTimeout));
-
-      var state = {
-        outcome: DRAW,
-        turn: 0
-      };
+      commit();
+      A.only(() => {
+        const [saltA, handA] = declassify([_saltA, _handA]);
+      });
+      A.publish(saltA, handA)
+        .timeout(DEADLINE, () => closeTo(B, informTimeout));
+      checkCommitment(commitA, saltA, handA);
+      var state = { outcome: winner(handA, handB), turn: 1 };
       invariant(balance() == 2 * wager && isOutcome(state.outcome));
       while (state.outcome == DRAW) {
-        state = state.turn % 2 === 0
+        state = isEvenTurn(state)
           ? playRound[ALICE_GOES_FIRST](state)
           : playRound[BOB_GOES_FIRST](state)
         continue;
