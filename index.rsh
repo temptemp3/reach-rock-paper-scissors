@@ -6,6 +6,8 @@
 // Additions features
 // - Make game fair 
 // + Alternate first moves
+// TODO 
+// (1) optimize for case where there is no draw
 
 const [isHand, ROCK, PAPER, SCISSORS] = makeEnum(3);
 const [isOutcome, B_WINS, DRAW, A_WINS] = makeEnum(3);
