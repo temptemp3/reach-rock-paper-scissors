@@ -3,11 +3,12 @@
 // WORKSHOP
 
 // Rock Paper Scissors
-// Additions features
+// Additions features etc
 // - Make game fair 
 // + Alternate first moves
-// TODO 
-// (1) optimize for case where there is no draw
+// - Make game more efficient O(3n)
+// + optimize for case where there is no draw
+// (1) - play k hands in a single round
 
 const DEADLINE = 100;
 const [isHand, ROCK, PAPER, SCISSORS] = makeEnum(3);
