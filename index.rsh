@@ -9,10 +9,9 @@
 // TODO 
 // (1) optimize for case where there is no draw
 
+const DEADLINE = 100;
 const [isHand, ROCK, PAPER, SCISSORS] = makeEnum(3);
 const [isOutcome, B_WINS, DRAW, A_WINS] = makeEnum(3);
-const ALICE_GOES_FIRST = 0;
-const BOB_GOES_FIRST = 1;
 
 const winner = (handA, handB) =>
   ((handA + (4 - handB)) % 3);
@@ -33,89 +32,64 @@ const Player =
   ...hasRandom,
   getHand: Fun([], UInt),
   seeOutcome: Fun([UInt], Null),
-  informTimeout: Fun([], Null)
+  informTimeout: Fun([], Null),
 };
 const Alice =
 {
   ...Player,
-  wager: UInt
+  wager: UInt,
 };
 const Bob =
 {
   ...Player,
-  acceptWager: Fun([UInt], Null)
+  acceptWager: Fun([UInt], Null),
 };
 
-const DEADLINE = 100;
 export const main =
   Reach.App(
     {},
     [Participant('Alice', Alice), Participant('Bob', Bob)],
     (A, B) => {
+      const isEvenTurn = state => state.turn % 2 === 0;
+
       const informTimeout = () => {
         each([A, B], () => {
           interact.informTimeout();
         });
       };
-      const isEvenTurn = state => state.turn % 2 === 0;
-      const playRound = [
-        (state) => {
-          commit();
-          A.only(() => {
-            const _handA = interact.getHand();
-            const [_commitA, _saltA] = makeCommitment(interact, _handA);
-            const commitA = declassify(_commitA);
-          });
-          A.publish(commitA)
-            .timeout(DEADLINE, () => closeTo(B, informTimeout));
-          commit();
-          unknowable(B, A(_handA, _saltA));
-          B.only(() => {
-            const handB = declassify(interact.getHand())
-          });
-          B.publish(handB)
-            .timeout(DEADLINE, () => closeTo(A, informTimeout));
-          commit();
-          A.only(() => {
-            const [saltA, handA] = declassify([_saltA, _handA]);
-          });
-          A.publish(saltA, handA)
-            .timeout(DEADLINE, () => closeTo(B, informTimeout));
-          checkCommitment(commitA, saltA, handA);
-          return {
-            outcome: winner(handA, handB),
-            turn: state.turn + 1
-          };
-        },
-        (state) => {
-          commit();
-          B.only(() => {
-            const _handB = interact.getHand();
-            const [_commitB, _saltB] = makeCommitment(interact, _handB);
-            const commitB = declassify(_commitB);
-          });
-          B.publish(commitB)
-            .timeout(DEADLINE, () => closeTo(A, informTimeout));
-          commit();
-          unknowable(A, B(_handB, _saltB));
-          A.only(() => {
-            const handA = declassify(interact.getHand());
-          });
-          A.publish(handA)
-            .timeout(DEADLINE, () => closeTo(B, informTimeout));
-          commit();
-          B.only(() => {
-            const [saltB, handB] = declassify([_saltB, _handB]);
-          });
-          B.publish(saltB, handB)
-            .timeout(DEADLINE, () => closeTo(A, informTimeout));
-          checkCommitment(commitB, saltB, handB);
-          return {
-            outcome: winner(handA, handB),
-            turn: state.turn + 1
-          };
-        }
-      ]
+
+      const playHands = (state, C, D) => {
+        C.only(() => {
+          const _handA = interact.getHand();
+          const [_commitA, _saltA] = makeCommitment(interact, _handA);
+          const commitA = declassify(_commitA);
+        });
+        C.publish(commitA)
+          .timeout(DEADLINE, () => closeTo(B, informTimeout));
+        commit();
+        unknowable(D, C(_handA, _saltA));
+        D.only(() => {
+          const handB = declassify(interact.getHand())
+        });
+        D.publish(handB)
+          .timeout(DEADLINE, () => closeTo(C, informTimeout));
+        commit();
+        C.only(() => {
+          const [saltA, handA] = declassify([_saltA, _handA]);
+        });
+        C.publish(saltA, handA)
+          .timeout(DEADLINE, () => closeTo(D, informTimeout));
+        checkCommitment(commitA, saltA, handA);
+        return {
+          outcome: winner(handA, handB),
+          turn: state.turn + 1
+        };
+      }
+
+      const playRound = (state, C, D) => {
+        commit();
+        return playHands(state, C, D);
+      }
 
       A.only(() => {
         const wager = declassify(interact.wager);
@@ -146,8 +120,8 @@ export const main =
       invariant(balance() == 2 * wager && isOutcome(state.outcome));
       while (state.outcome == DRAW) {
         state = isEvenTurn(state)
-          ? playRound[ALICE_GOES_FIRST](state)
-          : playRound[BOB_GOES_FIRST](state)
+          ? playRound(state, A, B)
+          : playRound(state, B, A)
         continue;
       }
 
