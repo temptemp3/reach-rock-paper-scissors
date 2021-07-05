@@ -59,12 +59,14 @@ import { ask, yesno, done } from '@reach-sh/stdlib/ask.mjs';
   };
 
   if (isAlice) {
+    // TODO prevent alice from setting the wager too high
     const amt = await ask(
       `How much do you want to wager?`,
       stdlib.parseCurrency
     );
     interact.wager = amt;
   } else {
+    // TODO prevent bob from accepting too high of a wager
     interact.acceptWager = async (amt) => {
       const accepted = await ask(
         `Do you accept the wager of ${fmt(amt)}?`,
@@ -84,16 +86,38 @@ import { ask, yesno, done } from '@reach-sh/stdlib/ask.mjs';
     'Paper': 1, 'P': 1, 'p': 1,
     'Scissors': 2, 'S': 2, 's': 2,
   };
-  interact.getHand = async () => {
-    const hand = await ask(`What hand will you play?`, (x) => {
-      const hand = HANDS[x];
-      if ( hand == null ) {
-        throw Error(`Not a valid hand ${hand}`);
-      }
-      return hand;
-    });
-    console.log(`You played ${HAND[hand]}`);
-    return hand;
+  // getHand (interaction)
+  // - returns [countOfHandPlayed, ...hands]
+  interact.getHand = async (MAX_HANDS) => {
+    console.log(`You are allowed to play up to ${MAX_HANDS - 1} hands`);
+    const hands = Array.from({ length: MAX_HANDS }).map(el => Number(0));
+    let count;
+    // use 1-based array slice to hold hands
+    for (count = 1; count < MAX_HANDS; count++) {
+      // get hand
+      const hand = await ask(`What hand will you play?`, (x) => {
+        const hand = HANDS[x];
+        if (hand == null) {
+          throw Error(`Not a valid hand ${hand}`);
+        }
+        return hand;
+      });
+      // show hand and save
+      console.log(`You played ${HAND[hand]}`);
+      hands[count] = hand
+      // ask participant if they want to play another hand if not last hand
+      if (count == MAX_HANDS - 1) continue
+      const playAnotherHand = await ask(
+        `Play another hand?`,
+        yesno
+      );
+      if (!playAnotherHand) break;
+    }
+    // use 0-based head of array to hold count hands played
+    hands[0] = count;
+    const plural = count > 1 ? 's' : ''
+    console.log(`You played ${count} hand${plural}: ${hands.slice(1, count+1).map(hand=>HAND[hand]).join(' ')}`);
+    return hands;
   };
 
   const OUTCOME = ['Bob wins', 'Draw', 'Alice wins'];
