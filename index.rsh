@@ -81,7 +81,7 @@ export const main =
         });
 
       /*
-       * resolveWiner
+       * resolveWinner
        * returns winner of sets of order hands
        */
       const resolveWinner = (aHands, bHands) =>
