@@ -89,11 +89,10 @@ import { ask, yesno, done } from '@reach-sh/stdlib/ask.mjs';
   // getHand (interaction)
   // - returns [countOfHandPlayed, ...hands]
   interact.getHand = async (MAX_HANDS) => {
-    console.log(`You are allowed to play up to ${MAX_HANDS - 1} hands`);
+    console.log(`You are allowed to play up to ${MAX_HANDS} hands`);
     const hands = Array.from({ length: MAX_HANDS }).map(el => Number(0));
     let count;
-    // use 1-based array slice to hold hands
-    for (count = 1; count < MAX_HANDS; count++) {
+    for (count = 0; count < MAX_HANDS; count++) {
       // get hand
       const hand = await ask(`What hand will you play?`, (x) => {
         const hand = HANDS[x];
@@ -106,18 +105,19 @@ import { ask, yesno, done } from '@reach-sh/stdlib/ask.mjs';
       console.log(`You played ${HAND[hand]}`);
       hands[count] = hand
       // ask participant if they want to play another hand if not last hand
-      if (count == MAX_HANDS - 1) continue
+      if (count == MAX_HANDS) continue
       const playAnotherHand = await ask(
         `Play another hand?`,
         yesno
       );
       if (!playAnotherHand) break;
     }
-    // use 0-based head of array to hold count hands played
-    hands[0] = count;
     const plural = count > 1 ? 's' : ''
-    console.log(`You played ${count} hand${plural}: ${hands.slice(1, count+1).map(hand=>HAND[hand]).join(' ')}`);
-    return hands;
+    console.log(`You played ${count + 1} hand${plural}: ${hands.slice(0, count + 1).map(hand => HAND[hand]).join(' ')}`);
+    return {
+      hands,
+      count
+    };
   };
 
   const OUTCOME = ['Bob wins', 'Draw', 'Alice wins'];
