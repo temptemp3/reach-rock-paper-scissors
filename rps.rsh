@@ -7,7 +7,7 @@ export const [isOutcome, B_WINS, DRAW, A_WINS] = makeEnum(3);
  * winner
  * returns outcome of two hands
  */
-const winner = (handC, handD) => ((handC + (4 - handD)) % 3)
+export const winner = (handC, handD) => ((handC + (4 - handD)) % 3)
 
 assert(winner(ROCK, PAPER) == B_WINS);
 assert(winner(PAPER, ROCK) == A_WINS);
