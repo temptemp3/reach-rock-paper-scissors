@@ -33,3 +33,5 @@ import * as rps from '@temptemp3/reach-rock-paper-scissors:multihand.rsh';
 
 export const main = rps.main
 ```
+
+see <https://github.com/temptemp3/reach-rock-paper-scissors/blob/main/index.rsh>
