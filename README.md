@@ -1,6 +1,6 @@
 # reach-rock-paper-scissors
 
-## usage
+## import
 
 ## rps
 
@@ -35,3 +35,9 @@ export const main = rps.main
 ```
 
 see <https://github.com/temptemp3/reach-rock-paper-scissors/blob/main/index.rsh>
+
+## install packages 
+
+```
+reach compile --install-pkgs
+```
